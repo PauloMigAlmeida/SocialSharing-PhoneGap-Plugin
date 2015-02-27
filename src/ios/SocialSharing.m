@@ -485,10 +485,18 @@
     } else if ([imageName hasPrefix:@"file://"]) {
       image = [UIImage imageWithData:[NSData dataWithContentsOfFile:[[NSURL URLWithString:imageName] path]]];
     } else if ([imageName hasPrefix:@"data:"]) {
-      // using a base64 encoded string
-      NSURL *imageURL = [NSURL URLWithString:imageName];
-      NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
-      image = [UIImage imageWithData:imageData];
+        // using a base64 encoded string
+        #if __IPHONE_OS_VERSION_MAX_ALLOWED >= 80000 // iOS 8.0 supported
+            NSRange range = [imageName rangeOfString:@","];
+            if(range.location != NSNotFound){
+                NSString* base64Content = [imageName substringFromIndex:range.location + 1];
+                NSData *imageData = [[NSData alloc] initWithBase64EncodedString:base64Content options:NSDataBase64DecodingIgnoreUnknownCharacters];
+                image = [UIImage imageWithData:imageData];
+            }
+        #else // Provide back compatibility
+            NSURL *imageURL = [NSURL URLWithString:imageName];
+            NSData *imageData = [NSData dataWithContentsOfURL:imageURL];
+        #endif
     } else if ([imageName hasPrefix:@"assets-library://"]) {
       // use assets-library
       NSURL *imageURL = [NSURL URLWithString:imageName];
